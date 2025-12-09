@@ -1,13 +1,12 @@
 package middleware
 
 import (
-	"qrcodegen/config"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+    "strconv"
 )
 
-func Auth(cfg *config.Config) fiber.Handler {
+func Auth(jwtSecret string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		tokenString := c.Cookies("jwt_token")
 		if tokenString == "" {
@@ -15,10 +14,7 @@ func Auth(cfg *config.Config) fiber.Handler {
 		}
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fiber.NewError(fiber.StatusUnauthorized, "unexpected signing method")
-			}
-			return []byte(cfg.JWTSecret), nil
+			return []byte(jwtSecret), nil
 		})
 
 		if err != nil || !token.Valid {
@@ -30,8 +26,9 @@ func Auth(cfg *config.Config) fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
 		}
 
-		c.Locals("userID", claims["sub"])
-		c.Locals("email", claims["email"])
+        // Парсим ID и кладем в Locals
+        sub, _ := strconv.ParseInt(claims["sub"].(string), 10, 64)
+		c.Locals("userID", sub)
 
 		return c.Next()
 	}

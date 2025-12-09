@@ -1,78 +1,69 @@
 services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: qrcode_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d qrcode_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   migrate:
     build:
       context: .
-      dockerfile: ./backend/Dockerfile.migrate
-    command: ["-dir", "/migrations", "postgres", "postgres://qrcode:qrcode@db:5432/qrcode?sslmode=disable", "up"]
+      dockerfile: backend/Dockerfile.migrate
+    environment:
+      GOOSE_DRIVER: postgres
+      # Строка подключения такая же, как у backend, но для goose
+      GOOSE_DBSTRING: postgres://user:password@db:5432/qrcode_db?sslmode=disable
     depends_on:
       db:
         condition: service_healthy
-    restart: on-failure
-    networks:
-      - qrcode_bridge
+    command: up # Команда для goose: "применить миграции"
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: qrcode-backend:latest
-    container_name: qrcode-backend
-    env_file:
-    - ./backend/.env
-    ports:
-      - "8080:8080"
-    networks:
-      - qrcode_bridge
+    environment:
+      DATABASE_URL: postgres://user:password@db:5432/qrcode_db?sslmode=disable
+      GRPC_SERVER_ADDRESS: :9000
+      JWT_SECRET: super_secret_jwt_key
     depends_on:
+      db:
+        condition: service_healthy
+      # Backend ждет, пока миграции пройдут успешно
       migrate:
         condition: service_completed_successfully
+    expose:
+      - "9000"
 
-  db:
-    image: postgres:16-alpine
-    environment:
-      - POSTGRES_DB=qrcode
-      - POSTGRES_USER=qrcode
-      - POSTGRES_PASSWORD=qrcode
-      - PGDATA=/var/lib/postgresql/data/pgdata
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL","pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 10s
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
     ports:
-      - "5432:5432"
-    restart: unless-stopped
-    networks:
-      - qrcode_bridge
+      - "8080:8080"
+    environment:
+      GRPC_TARGET: backend:9000
+      JWT_SECRET: super_secret_jwt_key
+      APP_BASE_URL: http://localhost:8080
+    depends_on:
+      - backend
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
-    image: qrcode-frontend:latest
-    container_name: qrcode-frontend
+      dockerfile: Dockerfile
     ports:
-      - "80:5173"
+      - "80:80"
     depends_on:
-      - backend
-    networks:
-      - qrcode_bridge
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-      - VITE_BACKEND_HOST=http://backend:8080
+      - gateway
 
 volumes:
-  pgdata:
-
-networks:
-  qrcode_bridge:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.25.0.0/16 
+  postgres_data:

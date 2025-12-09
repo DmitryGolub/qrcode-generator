@@ -8,7 +8,7 @@ import (
 
 	"qrcodegen/config"
 	"qrcodegen/internal/dto"
-	"qrcodegen/internal/pkg/jwt"
+	"qrcodegen/pkg/jwt"
 	"qrcodegen/internal/repository/postgres"
 	sqldb "qrcodegen/sqlc/generated"
 

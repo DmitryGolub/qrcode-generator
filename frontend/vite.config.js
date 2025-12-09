@@ -1,12 +1,8 @@
-// vite.config.js
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-// Можно задавать через переменные окружения Docker Compose:
-//   VITE_BACKEND_HOST=http://qrcode-backend:8080
-//   VITE_USE_POLLING=true
 const backendTarget =
-  process.env.VITE_BACKEND_HOST || 'http://qrcode-backend:8080'
+  process.env.VITE_BACKEND_HOST || 'http://gateway:8080'
 
 const usePolling =
   String(process.env.CHOKIDAR_USEPOLLING || process.env.VITE_USE_POLLING || '')
@@ -15,31 +11,24 @@ const usePolling =
 export default defineConfig({
   plugins: [vue()],
   server: {
-    host: true,          // слушать 0.0.0.0 внутри контейнера
+    host: true,
     port: 5173,
     strictPort: true,
     allowedHosts: ['qrcode-itip.freedynamicdns.net'],
-    open: false,
     watch: {
-      usePolling,        // полезно на Mac/Windows/WSL
-    },
-    hmr: {
-      host: 'qrcode-itip.freedynamicdns.net',
-      clientPort: 80,
-      // Когда порт опубликован как 5173:5173, этого достаточно.
-      // Добавь clientPort: 5173, если браузер не цепляется к HMR за NAT/прокси.
-      // clientPort: 5173,
+      usePolling,
     },
     proxy: {
-      // Прокидываем API на бэкенд-сервис Docker по его имени
-      // Меняй пути под своё API
       '/api': {
         target: backendTarget,
         changeOrigin: true,
         secure: false,
-        // например, если бэкенд слушает на /, а у тебя /api на фронте:
-        // rewrite: (p) => p.replace(/^\/api/, ''),
       },
+      '/redirect': {
+        target: backendTarget,
+        changeOrigin: true,
+        secure: false,
+      }
     },
   },
 })
