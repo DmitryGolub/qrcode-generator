@@ -19,12 +19,11 @@ services:
       dockerfile: backend/Dockerfile.migrate
     environment:
       GOOSE_DRIVER: postgres
-      # Строка подключения такая же, как у backend, но для goose
       GOOSE_DBSTRING: postgres://user:password@db:5432/qrcode_db?sslmode=disable
     depends_on:
       db:
         condition: service_healthy
-    command: up # Команда для goose: "применить миграции"
+    command: up
 
   backend:
     build:
@@ -34,10 +33,10 @@ services:
       DATABASE_URL: postgres://user:password@db:5432/qrcode_db?sslmode=disable
       GRPC_SERVER_ADDRESS: :9000
       JWT_SECRET: super_secret_jwt_key
+      IPINFO_TOKEN: cf8fbbbc51fafc
     depends_on:
       db:
         condition: service_healthy
-      # Backend ждет, пока миграции пройдут успешно
       migrate:
         condition: service_completed_successfully
     expose:

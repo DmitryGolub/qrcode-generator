@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-var Module = fx.Provide(NewQRCodeClient)
+var Module = fx.Module("grpc_client", fx.Provide(NewQRCodeClient))
 
 func NewQRCodeClient(lc fx.Lifecycle, cfg *config.Config) (pb.QRCodeServiceClient, error) {
 	target := cfg.GRPCTarget
