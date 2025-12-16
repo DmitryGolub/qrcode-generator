@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	HTTPServerAddress string
+	GRPCServerAddress string
 	DatabaseURL       string
 	JWTSecret         string
 	JWTTTL            time.Duration
@@ -33,7 +33,7 @@ func New() *Config {
 	}
 
 	return &Config{
-		HTTPServerAddress: getEnv("HTTP_SERVER_ADDRESS", ":8080"),
+		GRPCServerAddress: getEnv("GRPC_SERVER_ADDRESS", ":8080"),
 		DatabaseURL:       getEnv("DATABASE_URL", ""),
 		JWTSecret:         jwtSecret,
 		JWTTTL:            time.Duration(ttlMinutes) * time.Minute,

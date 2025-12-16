@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+package qrcodegen.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "qrcodegen/pkg/api/v1;v1";
+
+message User {
+  int64 id = 1;
+  string email = 2;
+  string name = 3;
+}
+
+message Link {
+  int64 id = 1;
+  string original_url = 2;
+  string hash = 3;
+  string name = 4;
+  google.protobuf.Timestamp created_at = 5;
+  int64 transitions_count = 6;
+  string color = 7;
+  string background = 8;
+  double smoothing = 9;
+}
+
+message Transition {
+  int64 id = 1;
+  string country = 2;
+  string city = 3;
+  string referer = 4;
+  string user_agent = 5;
+  string browser = 6;
+  string os = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message RegisterRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 1;
+}
+
+message CreateLinkRequest {
+  string original_url = 1;
+  string name = 2;
+  int64 user_id = 3;
+}
+
+message GetLinkRequest {
+  int64 id = 1;
+  int64 user_id = 2;
+}
+
+message EditLinkRequest {
+  int64 id = 1;
+  int64 user_id = 2;
+  string original_url = 3;
+  string color = 4;
+  string background = 5;
+  double smoothing = 6;
+}
+
+message DeleteLinkRequest {
+  int64 id = 1;
+  int64 user_id = 2;
+}
+
+message ListLinksRequest {
+  int64 user_id = 1;
+  string search = 2;
+  string sort_by = 3;
+  string order = 4;
+}
+
+message ListLinksResponse {
+  repeated Link links = 1;
+}
+
+message GenerateQRCodeRequest {
+  string url = 1;
+  string color = 2;
+  string background = 3;
+  double smoothing = 4;
+}
+
+message GenerateQRCodeResponse {
+  bytes image = 1;
+}
+
+message GetRedirectRequest {
+  string hash = 1;
+  string ip = 2;
+  string user_agent = 3;
+  string referer = 4;
+}
+
+message GetRedirectResponse {
+  string original_url = 1;
+}
+
+message GetTransitionsRequest {
+  int64 link_id = 1;
+  int64 user_id = 2;
+}
+
+message GetTransitionsResponse {
+  repeated Transition transitions = 1;
+}
+
+service QRCodeService {
+  // Auth
+  rpc Register(RegisterRequest) returns (google.protobuf.Empty);
+  rpc Login(LoginRequest) returns (LoginResponse);
+
+  // Links
+  rpc CreateLink(CreateLinkRequest) returns (Link);
+  rpc GetAllLinks(ListLinksRequest) returns (ListLinksResponse);
+  rpc GetLink(GetLinkRequest) returns (Link);
+  rpc EditLink(EditLinkRequest) returns (Link);
+  rpc DeleteLink(DeleteLinkRequest) returns (google.protobuf.Empty);
+  
+  // Analytics
+  rpc GetTransitions(GetTransitionsRequest) returns (GetTransitionsResponse);
+
+  // Core Logic
+  rpc GenerateQRCode(GenerateQRCodeRequest) returns (GenerateQRCodeResponse);
+  rpc GetRedirect(GetRedirectRequest) returns (GetRedirectResponse);
+}

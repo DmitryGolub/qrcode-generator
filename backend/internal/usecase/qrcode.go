@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"qrcodegen/internal/dto"
-	"qrcodegen/internal/pkg/qrcode"
+	"qrcodegen/pkg/qrcode"
 )
 
 type QRUseCase struct{}
