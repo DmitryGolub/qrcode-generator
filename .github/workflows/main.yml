@@ -62,7 +62,6 @@ jobs:
             git clone --depth 1 -b ${BRANCH} ${REPO_URL} .
           fi
           DC="docker compose"
-          fi
 
           # Ensure database is up (uses healthcheck)
           \$DC up -d db
