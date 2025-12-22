@@ -61,11 +61,7 @@ jobs:
           else
             git clone --depth 1 -b ${BRANCH} ${REPO_URL} .
           fi
-
-          if docker compose version >/dev/null 2>&1; then
-            DC="docker compose"
-          else
-            DC="docker-compose"
+          DC="docker compose"
           fi
 
           # Ensure database is up (uses healthcheck)
